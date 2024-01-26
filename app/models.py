@@ -21,6 +21,7 @@ class User(Base):
                         nullable=False, server_default=text("now()"))
     updated_at = Column(TIMESTAMP(timezone=True),
                         nullable=False, server_default=text("now()"))
+    ads = relationship('Ad', back_populates='user')
 
 
 class Post(Base):
@@ -40,20 +41,23 @@ class Post(Base):
     user = relationship('User')
 
 
-class AdType(Enum):
-    SALE = 'продажа'
-    PURCHASE = 'покупка'
-    SERVICE = 'оказание услуг'
+class AdType(Base):
+    __tablename__ = 'ad_types'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Enum('Продажа', 'Покупка', 'Оказание услуг', name='ad_types_enum'), nullable=False)
 
 
 class Ad(Base):
-    __tablename__ = 'ad'
-    id = Column(Integer, primary_key=True)
-    title = Column(String)
-    description = Column(String)
-    ad_type = Column(Enum(AdType), nullable=False)
-    user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship("User", backref="ads")
+    __tablename__ = 'ads'
+
+    id = Column(Integer, primary_key=True,  autoincrement=True)
+    title = Column(String(100))
+    description = Column(String(500))
+    type_id = Column(Integer, ForeignKey('ad_types.id'))
+    user_id = Column(UUID, ForeignKey('users.id'))
+
+    user = relationship('User', back_populates='ads')
 
     def __init__(self, title, description, ad_type, user):
         self.title = title
