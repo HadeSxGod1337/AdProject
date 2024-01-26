@@ -1,6 +1,6 @@
 import uuid
 from .database import Base
-from sqlalchemy import TIMESTAMP, Column, ForeignKey, String, Boolean, text
+from sqlalchemy import TIMESTAMP, Column, ForeignKey, String, Boolean, text, Integer, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -13,6 +13,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     photo = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True, unique=True)
     verified = Column(Boolean, nullable=False, server_default='False')
     verification_code = Column(String, nullable=True, unique=True)
     role = Column(String, server_default='user', nullable=False)
@@ -37,3 +38,25 @@ class Post(Base):
     updated_at = Column(TIMESTAMP(timezone=True),
                         nullable=False, server_default=text("now()"))
     user = relationship('User')
+
+
+class AdType(Enum):
+    SALE = 'продажа'
+    PURCHASE = 'покупка'
+    SERVICE = 'оказание услуг'
+
+
+class Ad(Base):
+    __tablename__ = 'ad'
+    id = Column(Integer, primary_key=True)
+    title = Column(String)
+    description = Column(String)
+    ad_type = Column(Enum(AdType), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship("User", backref="ads")
+
+    def __init__(self, title, description, ad_type, user):
+        self.title = title
+        self.description = description
+        self.ad_type = ad_type
+        self.user = user
