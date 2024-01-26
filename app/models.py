@@ -41,26 +41,19 @@ class Post(Base):
     user = relationship('User')
 
 
-class AdType(Base):
-    __tablename__ = 'ad_types'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(Enum('Продажа', 'Покупка', 'Оказание услуг', name='ad_types_enum'), nullable=False)
-
-
 class Ad(Base):
     __tablename__ = 'ads'
 
     id = Column(Integer, primary_key=True,  autoincrement=True)
     title = Column(String(100))
     description = Column(String(500))
-    type_id = Column(Integer, ForeignKey('ad_types.id'))
+    type = Column(Enum('Продажа', 'Покупка', 'Оказание услуг', name='ad_types_enum'), nullable=False)
     user_id = Column(UUID, ForeignKey('users.id'))
 
     user = relationship('User', back_populates='ads')
 
-    def __init__(self, title, description, ad_type, user):
+    def __init__(self, title, description, type, user):
         self.title = title
         self.description = description
-        self.ad_type = ad_type
+        self.type = type
         self.user = user
