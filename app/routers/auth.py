@@ -30,6 +30,7 @@ async def create_user(payload: schemas.CreateUserSchema, db: Session = Depends(g
     payload.password = utils.hash_password(payload.password)
     del payload.passwordConfirm
     payload.role = 'user'
+    payload.is_superuser = False
     payload.verified = True
     payload.email = EmailStr(payload.email.lower())
     new_user = models.User(**payload.dict())
