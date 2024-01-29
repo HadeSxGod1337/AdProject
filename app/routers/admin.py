@@ -9,7 +9,6 @@ router = APIRouter()
 
 @router.get('/')
 def get_admin(db: Session = Depends(get_db), user: models.User = Depends(oauth2.require_user)):
-    print(user)
     if not user.is_superuser:
         raise HTTPException(status_code=403, detail="access is denied")
     return user

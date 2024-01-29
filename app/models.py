@@ -1,4 +1,3 @@
-import enum
 import uuid
 from .database import Base
 from sqlalchemy import TIMESTAMP, Column, ForeignKey, String, Boolean, text, Integer, Enum
