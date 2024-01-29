@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.get('/', response_model=schemas.ListAdResponse)
-def get_ads(db: Session = Depends(get_db), limit: int = 10, page: int = 1, search: str = '', user_id: str = Depends(require_user)):
+def get_ads(db: Session = Depends(get_db), limit: int = 10, page: int = 1, search: str = '', user: models.User = Depends(require_user)):
     skip = (page - 1) * limit
 
     ads = db.query(models.Ad).group_by(models.Ad.id).filter(
@@ -18,8 +18,8 @@ def get_ads(db: Session = Depends(get_db), limit: int = 10, page: int = 1, searc
     return {'status': 'success', 'results': len(ads), 'ads': ads}
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.AdResponse)
-def create_ad(ad: schemas.CreateAdSchema, db: Session = Depends(get_db), owner_id: str = Depends(require_user)):
-    ad.user_id = uuid.UUID(owner_id).hex if ad.user_id is None else ad.user_id.hex
+def create_ad(ad: schemas.CreateAdSchema, db: Session = Depends(get_db), user: models.User = Depends(require_user)):
+    ad.user_id = uuid.UUID(user.id).hex if ad.user_id is None else ad.user_id.hex
     new_ad = models.Ad(**ad.dict())
     db.add(new_ad)
     db.commit()
@@ -27,23 +27,23 @@ def create_ad(ad: schemas.CreateAdSchema, db: Session = Depends(get_db), owner_i
     return new_ad
 
 @router.put('/{id}', response_model=schemas.AdResponse)
-def update_ad(id: str, ad: schemas.UpdateAdSchema, db: Session = Depends(get_db), user_id: str = Depends(require_user)):
+def update_ad(id: str, ad: schemas.UpdateAdSchema, db: Session = Depends(get_db), user: models.User = Depends(require_user)):
     ad_query = db.query(models.Ad).filter(models.Ad.id == id)
     updated_ad = ad_query.first()
 
     if not updated_ad:
         raise HTTPException(status_code=status.HTTP_200_OK,
                             detail=f'No ad with this id: {id} found')
-    if updated_ad.user_id != user_id:
+    if updated_ad.user_id != user.id or not user.is_superuser:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail='You are not allowed to perform this action')
-    ad.user_id = user_id
+    ad.user_id = user.id
     ad_query.update(ad.dict(exclude_unset=True), synchronize_session=False)
     db.commit()
     return updated_ad
 
 @router.get('/{id}', response_model=schemas.AdResponse)
-def get_ad(id: str, db: Session = Depends(get_db), user_id: str = Depends(require_user)):
+def get_ad(id: str, db: Session = Depends(get_db), user: models.User = Depends(require_user)):
     ad = db.query(models.Ad).filter(models.Ad.id == id).first()
     if not ad:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -51,14 +51,14 @@ def get_ad(id: str, db: Session = Depends(get_db), user_id: str = Depends(requir
     return ad
 
 @router.delete('/{id}')
-def delete_ad(id: str, db: Session = Depends(get_db), user_id: str = Depends(require_user)):
+def delete_ad(id: str, db: Session = Depends(get_db), user: models.User = Depends(require_user)):
     ad_query = db.query(models.Ad).filter(models.Ad.id == id)
     ad = ad_query.first()
     if not ad:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'No ad with this id: {id} found')
 
-    if str(ad.user_id) != user_id:
+    if ad.user_id != user.id or not user.is_superuser:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail='You are not allowed to perform this action')
     ad_query.delete(synchronize_session=False)

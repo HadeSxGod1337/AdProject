@@ -9,6 +9,11 @@ from enum import auto
 
 from fastapi_restful.enums import StrEnum
 
+class UserRole(StrEnum):
+    admin = auto()
+    manager = auto()
+    user = auto()
+
 class User(Base):
     __tablename__ = 'users'
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False,
@@ -20,7 +25,8 @@ class User(Base):
     phone_number = Column(String, nullable=True, unique=True)
     verified = Column(Boolean, nullable=False, server_default='False')
     verification_code = Column(String, nullable=True, unique=True)
-    role = Column(String, server_default='user', nullable=False)
+    role = Column(Enum(UserRole, name='user_role_enum', default=UserRole.user), nullable=False)
+    is_superuser = Column(Boolean, nullable=False, server_default='False')
     created_at = Column(TIMESTAMP(timezone=True),
                         nullable=False, server_default=text("now()"))
     updated_at = Column(TIMESTAMP(timezone=True),
@@ -31,7 +37,7 @@ class AdTypes(StrEnum):
     SALE = auto()
     PURCHASE = auto()
     SERVICE = auto()
-    DEFAULT = auto()
+    NONE = auto()
 
 class Ad(Base):
     __tablename__ = 'ads'
@@ -39,7 +45,7 @@ class Ad(Base):
     id = Column(Integer, primary_key=True,  autoincrement=True)
     title = Column(String(100))
     description = Column(String(500))
-    type = Column(Enum(AdTypes, name='ad_types_enum', default=AdTypes.DEFAULT), nullable=False)
+    type = Column(Enum(AdTypes, name='ad_types_enum', default=AdTypes.NONE), nullable=False)
     user_id = Column(UUID, ForeignKey('users.id'))
     created_at = Column(TIMESTAMP(timezone=True),
                         nullable=False, server_default=text("now()"))

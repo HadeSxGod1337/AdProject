@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List
 import uuid
 from pydantic import BaseModel, EmailStr, constr
-from .models import AdTypes
+from .models import AdTypes, UserRole
 
 
 class UserBaseSchema(BaseModel):
@@ -18,7 +18,8 @@ class UserBaseSchema(BaseModel):
 class CreateUserSchema(UserBaseSchema):
     password: constr(min_length=8)
     passwordConfirm: str
-    role: str = 'user'
+    role: UserRole = UserRole.user
+    is_superuser: bool = False
     verified: bool = False
 
 
