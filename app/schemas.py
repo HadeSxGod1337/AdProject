@@ -2,12 +2,14 @@ from datetime import datetime
 from typing import List
 import uuid
 from pydantic import BaseModel, EmailStr, constr
+from .models import AdTypes
 
 
 class UserBaseSchema(BaseModel):
     name: str
     email: EmailStr
     photo: str
+    phone_number: str
 
     class Config:
         orm_mode = True
@@ -38,33 +40,31 @@ class FilteredUserResponse(UserBaseSchema):
     id: uuid.UUID
 
 
-class PostBaseSchema(BaseModel):
+class AdBaseSchema(BaseModel):
     title: str
-    content: str
-    category: str
-    image: str
+    description: str
+    type: AdTypes
     user_id: uuid.UUID | None = None
 
     class Config:
         orm_mode = True
 
 
-class CreatePostSchema(PostBaseSchema):
+class CreateAdSchema(AdBaseSchema):
     pass
 
 
-class PostResponse(PostBaseSchema):
-    id: uuid.UUID
+class AdResponse(AdBaseSchema):
+    id: int
     user: FilteredUserResponse
     created_at: datetime
     updated_at: datetime
 
 
-class UpdatePostSchema(BaseModel):
+class UpdateAdSchema(BaseModel):
     title: str
-    content: str
-    category: str
-    image: str
+    description: str
+    type: AdTypes
     user_id: uuid.UUID | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -73,7 +73,9 @@ class UpdatePostSchema(BaseModel):
         orm_mode = True
 
 
-class ListPostResponse(BaseModel):
+class ListAdResponse(BaseModel):
     status: str
     results: int
-    posts: List[PostResponse]
+    ads: List[AdResponse]
+
+    
